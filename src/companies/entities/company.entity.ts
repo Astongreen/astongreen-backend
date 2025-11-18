@@ -1,9 +1,12 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { CompanyStatus } from '../types/company.enum';
+import { User } from 'src/users/entities/user.entity';
+import { Project } from 'src/projects/entities/project.entity';
 
 @Entity({ name: 'companies' })
 export class Company {
     @PrimaryGeneratedColumn('uuid')
-    id: string;
+    companyId: string;
 
     @Column({ type: 'varchar', length: 255 })
     name: string;
@@ -28,6 +31,23 @@ export class Company {
 
     @Column({ type: 'varchar', length: 30 })
     spocNumber: string;
+
+    @Column({ type: 'enum', enum: CompanyStatus, default: CompanyStatus.PENDING })
+    status: CompanyStatus;
+
+    @Column({ type: 'varchar', length: 500, nullable: true })
+    rejectReason?: string | null;
+
+
+    @ManyToOne(() => User, (user) => user.companies, { onDelete: 'CASCADE' })
+    @JoinColumn({ name: 'createdBy' })
+    user: User;
+
+    @OneToMany(() => Project, project => project.company)
+    projects?: Project[];
+
+    @Column({ type: 'uuid' })
+    createdBy: string;
 
     // Documents stored as JSON array of strings
     @Column({ type: 'json', nullable: true })

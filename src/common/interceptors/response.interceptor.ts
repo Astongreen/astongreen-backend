@@ -11,13 +11,24 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, any> {
     intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
         const handler = context.getHandler();
         const customMessage = this.reflector.get<string>(RESPONSE_MESSAGE_KEY, handler);
-        const message = customMessage || Messages.GENERIC.SUCCESS;
+        const fallbackMessage = customMessage || Messages.GENERIC.SUCCESS;
         return next.handle().pipe(
-            map((data: any) => ({
-                success: true,
-                message,
-                data,
-            })),
+            map((data: any) => {
+                // Allow handlers to set a dynamic message by returning an object with __message
+                if (data && typeof data === 'object' && 'message' in data) {
+                    const { message, ...rest } = data as any;
+                    return {
+                        success: true,
+                        message: message || fallbackMessage,
+                        data: rest,
+                    };
+                }
+                return {
+                    success: true,
+                    message: fallbackMessage,
+                    data,
+                };
+            }),
         );
     }
 }

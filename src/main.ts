@@ -13,6 +13,15 @@ async function bootstrap() {
   const reflector = app.get(Reflector);
   app.useGlobalInterceptors(new ResponseInterceptor(reflector), new ErrorInterceptor());
 
+  // Enable CORS for all origins, ports, and common methods/headers
+  app.enableCors({
+    origin: true,
+    credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: '*',
+    exposedHeaders: '*',
+  });
+
   // Set global API prefix and version: all routes served under /api/v1
   app.setGlobalPrefix('api/v1');
 
@@ -20,7 +29,16 @@ async function bootstrap() {
     .setTitle('Aston Green API')
     .setDescription('API documentation')
     .setVersion('1.0')
-    .addBearerAuth()
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'Authorization',
+        in: 'header',
+      },
+      'access-token',
+    )
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('swagger', app, document, {

@@ -9,6 +9,7 @@ export class ErrorInterceptor implements NestInterceptor {
   intercept(_: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
       catchError((err) => {
+        console.log(err);
         if (err instanceof HttpException) {
           const status = err.getStatus();
           const response = err.getResponse() as any;
@@ -26,9 +27,10 @@ export class ErrorInterceptor implements NestInterceptor {
         }
         const errorBody = {
           success: false,
-          message: Messages.GENERIC.FAILURE,
+          message: err.message || Messages.GENERIC.FAILURE,
           statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         };
+        console.log('errorBody', errorBody);
         return throwError(() => new HttpException(errorBody, HttpStatus.INTERNAL_SERVER_ERROR));
       }),
     );

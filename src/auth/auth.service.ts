@@ -9,6 +9,7 @@ import { PasswordResetOtp } from './entities/password-reset-otp.entity';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import { Errors } from 'src/common/constants/messages';
+import { User } from 'src/users/entities/user.entity';
 
 @Injectable()
 export class AuthService {
@@ -34,18 +35,30 @@ export class AuthService {
   }
 
   async login(loginDto: LoginDto) {
-    const { email, password, role } = loginDto;
-    const user = await this.usersService.findByEmailAndRole(email, role);
+    const { email, password } = loginDto;
+    const user = await this.usersService.findByEmail(email);
     if (!user) {
       throw new UnauthorizedException(Errors.AUTH.INVALID_CREDENTIALS);
     }
-    const isValid = await bcrypt.compare(loginDto.password, user.passwordHash);
+    const isValid = await bcrypt.compare(password, user.passwordHash);
     if (!isValid) {
       throw new UnauthorizedException(Errors.AUTH.INVALID_CREDENTIALS);
     }
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    const payload = { userId: user.id, email: user.email, role: user.role };
     const accessToken = await this.jwtService.signAsync(payload);
-    return { accessToken };
+    const userInfo: User = await this.usersService.updateLastLoginAt(user.id);
+    return {
+      accessToken,
+      user: {
+        id: userInfo.id,
+        email: userInfo.email,
+        role: userInfo.role,
+        firstName: userInfo.firstName,
+        lastName: userInfo.lastName,
+        profilePicture: userInfo.profilePicture,
+        lastLoginAt: userInfo.lastLoginAt,
+      },
+    };
   }
 
   private generateOtp(): string {

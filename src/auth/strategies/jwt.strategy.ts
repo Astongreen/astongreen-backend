@@ -14,7 +14,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    return { userId: payload.sub, email: payload.email, role: payload.role };
+    // Support tokens signed with either 'sub' (standard) or 'userId'
+    const userId = payload?.sub ?? payload?.userId;
+    return { userId, email: payload.email, role: payload.role };
   }
 }
 

@@ -8,6 +8,7 @@ import { UsersModule } from './users/users.module';
 import { EmailModule } from './common/email/email.module';
 import { AdminModule } from './admin/admin.module';
 import { CompaniesModule } from './companies/companies.module';
+import { ProjectsModule } from './projects/projects.module';
 import { QueryTransformMiddleware } from './common/middlewares/query-transform/query-transform.middleware';
 
 @Module({
@@ -34,6 +35,7 @@ import { QueryTransformMiddleware } from './common/middlewares/query-transform/q
     AuthModule,
     AdminModule,
     CompaniesModule,
+    ProjectsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -20,29 +20,33 @@ export class AdminService {
 
 
     onModuleInit() {
-        this.createDefaultAdmin();
+        this.createDefaultSuperAdmin();
     }
 
-    async createDefaultAdmin() {
-        const existingAdmin = await this.userRepository.findOne({ where: { role: UserRole.ADMIN } });
+    async createDefaultSuperAdmin() {
+        const existingAdmin = await this.userRepository.findOne({ where: { role: UserRole.SUPER_ADMIN } });
         if (!existingAdmin) {
-            const adminEmail = this.configService.get<string>('ADMIN_EMAIL');
-            const adminPassword = this.configService.get<string>('ADMIN_PASSWORD');
+            const superAdminEmail = this.configService.get<string>('SUPER_ADMIN_EMAIL');
+            const superAdminPassword = this.configService.get<string>('SUPER_ADMIN_PASSWORD');
 
-            if (!adminEmail || !adminPassword) {
+            if (!superAdminEmail || !superAdminPassword) {
                 throw new Error('Default admin email or password is not set in configuration.');
             }
-            const passwordHash = await bcrypt.hash(adminPassword, 10);
+            const passwordHash = await bcrypt.hash(superAdminPassword, 10);
 
             const newAdmin = this.userRepository.create({
-                email: adminEmail,
+                email: superAdminEmail,
                 passwordHash: passwordHash,
-                role: UserRole.ADMIN
+                role: UserRole.SUPER_ADMIN
             });
 
             await this.userRepository.save(newAdmin);
         }
+    }
 
+    async checkUserIsSuperAdmin(userId: string): Promise<boolean> {
+        const user = await this.userRepository.findOne({ where: { id: userId, role: UserRole.SUPER_ADMIN } });
+        return !!user;
     }
 }
 
