@@ -5,39 +5,44 @@ services:
     build: .
     container_name: aston-green-app
     restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - DB_HOST=db
-      - DB_PORT=3306
-      - DB_USERNAME=root
-      - DB_PASSWORD=secret
-      - DB_NAME=aston_green
-      - DB_SYNC=false
-      - JWT_SECRET=change_me
-      - JWT_EXPIRES_IN=86400
-      - SENDGRID_API_KEY=${SENDGRID_API_KEY:-}
-      - EMAIL_FROM=no-reply@example.com
+    env_file:
+      - .env
     ports:
-      - "${PORT:-3000}:3000"
+      - "8080:8080"
     volumes:
       - ./uploads:/app/uploads
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    networks:
+      - aston-net
 
   db:
     image: mysql:8.0
     container_name: aston-green-db
     restart: unless-stopped
     environment:
-      - MYSQL_ROOT_PASSWORD=secret
-      - MYSQL_DATABASE=aston_green
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+    command: [
+      "--character-set-server=utf8mb4",
+      "--collation-server=utf8mb4_unicode_ci"
+    ]
     volumes:
       - mysql-data:/var/lib/mysql
     ports:
-      - "3306:3306"
+      - "3306:3306"  # remove if not needed
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - aston-net
 
 volumes:
   mysql-data:
 
-
+networks:
+  aston-net:
