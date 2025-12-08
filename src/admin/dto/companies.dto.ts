@@ -14,6 +14,12 @@ export class GetAllCompaniesDto {
     @IsString()
     @MaxLength(100)
     country?: string;
+
+
+    @ApiProperty({ required: false, description: 'Filter by status' })
+    @IsOptional()
+    @IsEnum(CompanyStatus)
+    status?: CompanyStatus;
 }
 
 

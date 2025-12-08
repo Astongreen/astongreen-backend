@@ -1,12 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsDateString, IsDefined, IsInt, IsNotEmpty, IsNumber, IsObject, IsString, IsUUID, MaxLength, ValidateNested } from 'class-validator';
-import { ProjectStatus } from '../types/project.enum';
+import { IsArray, IsBoolean, IsDateString, IsDefined, IsEnum, IsInt, IsNotEmpty, IsNumber, IsObject, IsString, IsUUID, MaxLength, ValidateNested } from 'class-validator';
+import { ProjectType } from 'src/common/enums/role.enum';
 
 export class ProjectBasicInfoDto {
     @ApiProperty() @IsString() @IsNotEmpty() @MaxLength(255) projectName: string;
     @ApiProperty() @IsString() @IsNotEmpty() @MaxLength(120) projectCode: string;
-    @ApiProperty() @IsString() @IsNotEmpty() @MaxLength(120) typeOfProject: string;
+    @ApiProperty() @IsEnum(ProjectType) @IsNotEmpty() typeOfProject: ProjectType;
     @ApiProperty() @IsString() @IsNotEmpty() @MaxLength(255) legalSpvName: string;
     @ApiProperty({ required: true }) @IsDefined() @IsUUID() companyId: string;
 }

@@ -6,6 +6,7 @@ import { ProjectDetails } from './project-details.entity';
 import { ProjectCapital } from './project-capital.entity';
 import { ProjectCo2Registry } from './project-co2-registry.entity';
 import { ProjectTokenization } from './project-tokenization.entity';
+import { ProjectType } from 'src/common/enums/role.enum';
 
 @Entity({ name: 'projects' })
 export class Project {
@@ -19,8 +20,8 @@ export class Project {
     @Column({ type: 'varchar', length: 120, unique: true })
     projectCode: string;
 
-    @Column({ type: 'varchar', length: 120 })
-    typeOfProject: string;
+    @Column({ type: 'enum', enum: ProjectType })
+    typeOfProject: ProjectType;
 
     @Column({ type: 'varchar', length: 255 })
     legalSpvName: string;

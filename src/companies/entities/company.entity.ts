@@ -2,6 +2,7 @@ import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, Pri
 import { CompanyStatus } from '../types/company.enum';
 import { User } from 'src/users/entities/user.entity';
 import { Project } from 'src/projects/entities/project.entity';
+import { Token } from 'src/token/entities/token.entity';
 
 @Entity({ name: 'companies' })
 export class Company {
@@ -45,6 +46,9 @@ export class Company {
 
     @OneToMany(() => Project, project => project.company)
     projects?: Project[];
+
+    @OneToMany(() => Token, token => token.company)
+    tokens?: Token[];
 
     @Column({ type: 'uuid' })
     createdBy: string;

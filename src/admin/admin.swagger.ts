@@ -23,6 +23,9 @@ export const ApiAdminGetCompanies = () =>
     ApiOperation({ summary: 'Admin: List companies' }),
     ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' }),
     ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 10)' }),
+    ApiQuery({ name: 'status', required: false, type: String, description: 'Filter by status' }),
+    ApiQuery({ name: 'country', required: false, type: String, description: 'Filter by country' }),
+    ApiQuery({ name: 'search', required: false, type: String, description: 'Free text search across company fields' }),
     ApiResponse({ status: 200, description: 'Companies fetched' }),
   );
 
@@ -187,6 +190,18 @@ export const ApiAdminApproveOrRejectProject = () =>
   applyDecorators(
     ApiOperation({ summary: 'Admin: Approve or reject a project' }),
     ApiResponse({ status: 200, description: 'Project approval status updated' }),
+  );
+
+export const ApiAdminGetProjectsByCompanyId = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Admin: List projects by company ID' }),
+    ApiResponse({ status: 200, description: 'Projects fetched by company ID' }),
+  );
+
+export const ApiAdminGetProjectsByProjectType = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Admin: List projects by project type' }),
+    ApiResponse({ status: 200, description: 'Projects fetched by project type' }),
   );
 
 

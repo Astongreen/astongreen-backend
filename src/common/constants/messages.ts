@@ -9,6 +9,16 @@ export const Messages = {
     FORGOT_PASSWORD_SENT: 'If the email exists, an OTP has been sent',
     RESET_PASSWORD_SUCCESS: 'Password reset successful',
   },
+  USERS: {
+    PASSWORD_CHANGED: 'Password changed successfully',
+    PROFILE_UPDATED: 'Profile updated successfully',
+  },
+  TOKEN: {
+    TOKEN_CREATED: 'Token created successfully',
+    TOKEN_UPDATED: 'Token updated successfully',
+    TOKEN_DELETED: 'Token deleted successfully',
+    TOKENS_GET_ALL: 'Tokens fetched successfully',
+  },
   ADMIN: {
     COMPANY_CREATED: 'Company created successfully',
     COMPANY_UPDATED: 'Company updated successfully',
@@ -21,10 +31,12 @@ export const Messages = {
     PROJECT_UPDATED: 'Project updated successfully',
     PROJECT_GET_ALL: 'Projects fetched successfully',
     PROJECT_GET_BY_ID: 'Project fetched successfully',
+    PROJECT_GET_BY_PROJECT_TYPE: 'Projects fetched successfully by project type',
     PROJECT_APPROVED_OR_REJECTED: 'Project approved or rejected successfully',
     PROJECT_APPROVED: 'Project approved successfully',
     PROJECT_REJECTED: 'Project rejected successfully',
     COMPANY_GET_ALL_APPROVED: 'All approved companies fetched successfully',
+    PROJECT_GET_BY_COMPANY_ID: 'Projects fetched successfully by company ID',
   },
 } as const;
 
@@ -35,6 +47,7 @@ export const Errors = {
   },
   AUTH: {
     INVALID_CREDENTIALS: 'Invalid credentials',
+    INVALID_CURRENT_PASSWORD: 'Current password is incorrect',
   },
   COMPANY: {
     COMPANY_NOT_FOUND: 'Company not found',

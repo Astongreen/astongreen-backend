@@ -4,18 +4,142 @@ import { Repository } from 'typeorm';
 import { Project } from './entities/project.entity';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
-import { Company } from 'src/companies/entities/company.entity';
 import { PaginationService } from 'src/common/pagination/pagination.service';
 import { QueryTransformOptions } from 'src/common/middlewares/query-transform/query-transform.interface';
 import { ProjectStatus } from './types/project.enum';
+import { Errors } from 'src/common/constants/messages';
+import { ProjectType } from 'src/common/enums/role.enum';
 
 @Injectable()
 export class ProjectsService {
     constructor(
         @InjectRepository(Project) private readonly projectRepository: Repository<Project>,
-        @InjectRepository(Company) private readonly companyRepository: Repository<Company>,
         private readonly paginationService: PaginationService,
     ) { }
+
+    // -----------------------
+    // Mapping / conversion utils
+    // -----------------------
+    private static readonly SEARCHABLE_FIELDS: string[] = [
+        'projectName',
+        'projectCode',
+        'typeOfProject',
+        'legalSpvName',
+        'company.companyId',
+    ];
+
+    private static readonly DEFAULT_RELATIONS: string[] = ['company'];
+
+    private parseDateInput(input: unknown): Date | null {
+        if (input === null || input === undefined) return null;
+        // Accept number, numeric string (seconds or millis), or ISO string
+        if (typeof input === 'number') {
+            // assume epoch seconds if 10-11 digits, else millis
+            const millis = input < 1e12 ? input * 1000 : input;
+            return new Date(millis);
+        }
+        if (typeof input === 'string') {
+            const trimmed = input.trim();
+            if (!trimmed) return null;
+            if (/^\d+$/.test(trimmed)) {
+                const num = Number(trimmed);
+                const millis = trimmed.length <= 11 ? num * 1000 : num;
+                return new Date(millis);
+            }
+            const d = new Date(trimmed);
+            return isNaN(d.getTime()) ? null : d;
+        }
+        return null;
+    }
+
+    private toStringOrNull(value: unknown): string | null {
+        return value !== undefined ? String(value) : null;
+    }
+
+    private mapDetails(details: any, existing?: any) {
+        const base = existing ?? {};
+        return {
+            ...base,
+            dateOfCommissioningExpected: details?.dateOfCommissioningExpected !== undefined
+                ? this.parseDateInput(details?.dateOfCommissioningExpected)
+                : base?.dateOfCommissioningExpected ?? null,
+            tariff: details?.tariff !== undefined
+                ? this.toStringOrNull(details?.tariff)
+                : base?.tariff ?? null,
+            creditRatingOfCharter: details?.creditRatingOfCharter ?? base?.creditRatingOfCharter ?? null,
+            internalCreditRating: details?.internalCreditRating ?? base?.internalCreditRating ?? null,
+            concessionAgreementTenure: details?.concessionAgreementTenure ?? base?.concessionAgreementTenure ?? null,
+            locationCoordinates: details?.locationCoordinates ?? base?.locationCoordinates ?? null,
+            nameOfCharter: details?.nameOfCharter ?? base?.nameOfCharter ?? null,
+            projectCapacity: details?.projectCapacity ?? base?.projectCapacity ?? null,
+            externalCreditRating: details?.externalCreditRating ?? base?.externalCreditRating ?? null,
+        };
+    }
+
+    private mapCapital(capital: any, existing?: any) {
+        const base = existing ?? {};
+        return {
+            ...base,
+            paidUpEquityCapital: capital?.paidUpEquityCapital !== undefined
+                ? this.toStringOrNull(capital?.paidUpEquityCapital)
+                : base?.paidUpEquityCapital ?? null,
+            debtFromBanks: capital?.debtFromBanks !== undefined
+                ? this.toStringOrNull(capital?.debtFromBanks)
+                : base?.debtFromBanks ?? null,
+            tenureOfDebtYears: capital?.tenureOfDebtYears ?? base?.tenureOfDebtYears ?? null,
+            interestRatePercent: capital?.interestRatePercent !== undefined
+                ? this.toStringOrNull(capital?.interestRatePercent)
+                : base?.interestRatePercent ?? null,
+            dscr: capital?.dscr !== undefined
+                ? this.toStringOrNull(capital?.dscr)
+                : base?.dscr ?? null,
+            prbPreTaxPercent: capital?.prbPreTaxPercent !== undefined
+                ? this.toStringOrNull(capital?.prbPreTaxPercent)
+                : base?.prbPreTaxPercent ?? null,
+            totalSharesSubscribed: capital?.totalSharesSubscribed !== undefined
+                ? this.toStringOrNull(capital?.totalSharesSubscribed)
+                : base?.totalSharesSubscribed ?? null,
+            currentBookValuePerShare: capital?.currentBookValuePerShare !== undefined
+                ? this.toStringOrNull(capital?.currentBookValuePerShare)
+                : base?.currentBookValuePerShare ?? null,
+            capitalRaisedByPromoters: capital?.capitalRaisedByPromoters !== undefined
+                ? this.toStringOrNull(capital?.capitalRaisedByPromoters)
+                : base?.capitalRaisedByPromoters ?? null,
+        };
+    }
+
+    private mapCo2Registry(co2Registry: any, existing?: any) {
+        const base = existing ?? {};
+        return {
+            ...base,
+            registryName: co2Registry?.registryName ?? base?.registryName ?? null,
+            registryProjectId: co2Registry?.registryProjectId ?? base?.registryProjectId ?? null,
+            dateOfPddRegistration: co2Registry?.dateOfPddRegistration !== undefined
+                ? this.parseDateInput(co2Registry?.dateOfPddRegistration)
+                : base?.dateOfPddRegistration ?? null,
+            co2IssuedSoFar: co2Registry?.co2IssuedSoFar !== undefined
+                ? this.toStringOrNull(co2Registry?.co2IssuedSoFar)
+                : base?.co2IssuedSoFar ?? null,
+            registeredMitigationOutcome: co2Registry?.registeredMitigationOutcome ?? base?.registeredMitigationOutcome ?? false,
+        };
+    }
+
+    private mapTokenization(tokenization: any, existing?: any) {
+        const base = existing ?? {};
+        return {
+            ...base,
+            investmentTokenChosen: tokenization?.investmentTokenChosen ?? base?.investmentTokenChosen ?? null,
+            interestInListing: tokenization?.interestInListing ?? base?.interestInListing ?? null,
+            dcoRegistrationServiceProvided: tokenization?.dcoRegistrationServiceProvided ?? base?.dcoRegistrationServiceProvided ?? false,
+            co2ServicesPerformed: tokenization?.co2ServicesPerformed ?? base?.co2ServicesPerformed ?? false,
+            keyProjectDocuments: tokenization?.keyProjectDocuments ?? base?.keyProjectDocuments ?? null,
+            tokenConversionRule: tokenization?.tokenConversionRule ?? base?.tokenConversionRule ?? null,
+            tokenPrice: tokenization?.tokenPrice !== undefined
+                ? this.toStringOrNull(tokenization?.tokenPrice)
+                : base?.tokenPrice ?? null,
+            tokenPriceCurrency: tokenization?.tokenPriceCurrency ?? base?.tokenPriceCurrency ?? null,
+        };
+    }
 
     async create(dto: CreateProjectDto & { status: ProjectStatus }, createdBy: string): Promise<Project> {
         const existing = await this.projectRepository.findOne({ where: { projectCode: (dto as any).basicInfo?.projectCode } as any });
@@ -23,54 +147,17 @@ export class ProjectsService {
             throw new ConflictException('Project with this code already exists');
         }
 
+        const basicInfo = (dto as any).basicInfo ?? {};
         const project = this.projectRepository.create({
-            projectName: (dto as any).basicInfo?.projectName,
-            projectCode: (dto as any).basicInfo?.projectCode,
-            typeOfProject: (dto as any).basicInfo?.typeOfProject,
-            legalSpvName: (dto as any).basicInfo?.legalSpvName,
-            // set relation by id (avoids extra query and guarantees FK set)
-            company: (dto as any).basicInfo?.companyId
-                ? ({ companyId: (dto as any).basicInfo.companyId } as any)
-                : undefined,
-            details: {
-                dateOfCommissioningExpected: (dto as any).details?.dateOfCommissioningExpected ? new Date((dto as any).details?.dateOfCommissioningExpected) : null,
-                tariff: (dto as any).details?.tariff !== undefined ? String((dto as any).details?.tariff) : null,
-                creditRatingOfCharter: (dto as any).details?.creditRatingOfCharter ?? null,
-                internalCreditRating: (dto as any).details?.internalCreditRating ?? null,
-                concessionAgreementTenure: (dto as any).details?.concessionAgreementTenure ?? null,
-                locationCoordinates: (dto as any).details?.locationCoordinates ?? null,
-                nameOfCharter: (dto as any).details?.nameOfCharter ?? null,
-                projectCapacity: (dto as any).details?.projectCapacity ?? null,
-                externalCreditRating: (dto as any).details?.externalCreditRating ?? null,
-            },
-            capital: {
-                paidUpEquityCapital: (dto as any).capital?.paidUpEquityCapital !== undefined ? String((dto as any).capital?.paidUpEquityCapital) : null,
-                debtFromBanks: (dto as any).capital?.debtFromBanks !== undefined ? String((dto as any).capital?.debtFromBanks) : null,
-                tenureOfDebtYears: (dto as any).capital?.tenureOfDebtYears ?? null,
-                interestRatePercent: (dto as any).capital?.interestRatePercent !== undefined ? String((dto as any).capital?.interestRatePercent) : null,
-                dscr: (dto as any).capital?.dscr !== undefined ? String((dto as any).capital?.dscr) : null,
-                prbPreTaxPercent: (dto as any).capital?.prbPreTaxPercent !== undefined ? String((dto as any).capital?.prbPreTaxPercent) : null,
-                totalSharesSubscribed: (dto as any).capital?.totalSharesSubscribed !== undefined ? String((dto as any).capital?.totalSharesSubscribed) : null,
-                currentBookValuePerShare: (dto as any).capital?.currentBookValuePerShare !== undefined ? String((dto as any).capital?.currentBookValuePerShare) : null,
-                capitalRaisedByPromoters: (dto as any).capital?.capitalRaisedByPromoters !== undefined ? String((dto as any).capital?.capitalRaisedByPromoters) : null,
-            },
-            co2Registry: {
-                registryName: (dto as any).co2Registry?.registryName ?? null,
-                registryProjectId: (dto as any).co2Registry?.registryProjectId ?? null,
-                dateOfPddRegistration: (dto as any).co2Registry?.dateOfPddRegistration ? new Date((dto as any).co2Registry?.dateOfPddRegistration) : null,
-                co2IssuedSoFar: (dto as any).co2Registry?.co2IssuedSoFar !== undefined ? String((dto as any).co2Registry?.co2IssuedSoFar) : null,
-                registeredMitigationOutcome: (dto as any).co2Registry?.registeredMitigationOutcome ?? false,
-            },
-            tokenization: {
-                investmentTokenChosen: (dto as any).tokenization?.investmentTokenChosen ?? null,
-                interestInListing: (dto as any).tokenization?.interestInListing ?? null,
-                dcoRegistrationServiceProvided: (dto as any).tokenization?.dcoRegistrationServiceProvided ?? false,
-                co2ServicesPerformed: (dto as any).tokenization?.co2ServicesPerformed ?? false,
-                keyProjectDocuments: (dto as any).tokenization?.keyProjectDocuments ?? null,
-                tokenConversionRule: (dto as any).tokenization?.tokenConversionRule ?? null,
-                tokenPrice: (dto as any).tokenization?.tokenPrice !== undefined ? String((dto as any).tokenization?.tokenPrice) : null,
-                tokenPriceCurrency: (dto as any).tokenization?.tokenPriceCurrency ?? null,
-            },
+            projectName: basicInfo?.projectName,
+            projectCode: basicInfo?.projectCode,
+            typeOfProject: basicInfo?.typeOfProject,
+            legalSpvName: basicInfo?.legalSpvName,
+            company: basicInfo?.companyId ? ({ companyId: basicInfo.companyId } as any) : undefined,
+            details: this.mapDetails((dto as any).details),
+            capital: this.mapCapital((dto as any).capital),
+            co2Registry: this.mapCo2Registry((dto as any).co2Registry),
+            tokenization: this.mapTokenization((dto as any).tokenization),
             status: dto.status ?? ProjectStatus.PENDING,
             createdBy: { id: createdBy } as any,
         });
@@ -82,57 +169,19 @@ export class ProjectsService {
         if (!existing) {
             throw new NotFoundException('Project not found');
         }
-        const newCompanyId: string | undefined = (dto as any).basicInfo?.companyId;
+        const basicInfo = (dto as any).basicInfo ?? {};
+        const newCompanyId: string | undefined = basicInfo?.companyId;
 
         const merged = this.projectRepository.merge(existing, {
-            projectName: (dto as any).basicInfo?.projectName ?? existing.projectName,
-            projectCode: (dto as any).basicInfo?.projectCode ?? existing.projectCode,
-            typeOfProject: (dto as any).basicInfo?.typeOfProject ?? existing.typeOfProject,
-            legalSpvName: (dto as any).basicInfo?.legalSpvName ?? existing.legalSpvName,
+            projectName: basicInfo?.projectName ?? existing.projectName,
+            projectCode: basicInfo?.projectCode ?? existing.projectCode,
+            typeOfProject: basicInfo?.typeOfProject ?? existing.typeOfProject,
+            legalSpvName: basicInfo?.legalSpvName ?? existing.legalSpvName,
             company: newCompanyId !== undefined ? ({ companyId: newCompanyId } as any) : existing.company,
-            details: {
-                ...(existing as any).details,
-                dateOfCommissioningExpected: (dto as any).details?.dateOfCommissioningExpected ? new Date((dto as any).details?.dateOfCommissioningExpected) : (existing as any).details?.dateOfCommissioningExpected,
-                tariff: (dto as any).details?.tariff !== undefined ? String((dto as any).details?.tariff) : (existing as any).details?.tariff,
-                creditRatingOfCharter: (dto as any).details?.creditRatingOfCharter ?? (existing as any).details?.creditRatingOfCharter,
-                internalCreditRating: (dto as any).details?.internalCreditRating ?? (existing as any).details?.internalCreditRating,
-                concessionAgreementTenure: (dto as any).details?.concessionAgreementTenure ?? (existing as any).details?.concessionAgreementTenure,
-                locationCoordinates: (dto as any).details?.locationCoordinates ?? (existing as any).details?.locationCoordinates,
-                nameOfCharter: (dto as any).details?.nameOfCharter ?? (existing as any).details?.nameOfCharter,
-                projectCapacity: (dto as any).details?.projectCapacity ?? (existing as any).details?.projectCapacity,
-                externalCreditRating: (dto as any).details?.externalCreditRating ?? (existing as any).details?.externalCreditRating,
-            } as any,
-            capital: {
-                ...(existing as any).capital,
-                paidUpEquityCapital: (dto as any).capital?.paidUpEquityCapital !== undefined ? String((dto as any).capital?.paidUpEquityCapital) : (existing as any).capital?.paidUpEquityCapital,
-                debtFromBanks: (dto as any).capital?.debtFromBanks !== undefined ? String((dto as any).capital?.debtFromBanks) : (existing as any).capital?.debtFromBanks,
-                tenureOfDebtYears: (dto as any).capital?.tenureOfDebtYears ?? (existing as any).capital?.tenureOfDebtYears,
-                interestRatePercent: (dto as any).capital?.interestRatePercent !== undefined ? String((dto as any).capital?.interestRatePercent) : (existing as any).capital?.interestRatePercent,
-                dscr: (dto as any).capital?.dscr !== undefined ? String((dto as any).capital?.dscr) : (existing as any).capital?.dscr,
-                prbPreTaxPercent: (dto as any).capital?.prbPreTaxPercent !== undefined ? String((dto as any).capital?.prbPreTaxPercent) : (existing as any).capital?.prbPreTaxPercent,
-                totalSharesSubscribed: (dto as any).capital?.totalSharesSubscribed !== undefined ? String((dto as any).capital?.totalSharesSubscribed) : (existing as any).capital?.totalSharesSubscribed,
-                currentBookValuePerShare: (dto as any).capital?.currentBookValuePerShare !== undefined ? String((dto as any).capital?.currentBookValuePerShare) : (existing as any).capital?.currentBookValuePerShare,
-                capitalRaisedByPromoters: (dto as any).capital?.capitalRaisedByPromoters !== undefined ? String((dto as any).capital?.capitalRaisedByPromoters) : (existing as any).capital?.capitalRaisedByPromoters,
-            } as any,
-            co2Registry: {
-                ...(existing as any).co2Registry,
-                registryName: (dto as any).co2Registry?.registryName ?? (existing as any).co2Registry?.registryName,
-                registryProjectId: (dto as any).co2Registry?.registryProjectId ?? (existing as any).co2Registry?.registryProjectId,
-                dateOfPddRegistration: (dto as any).co2Registry?.dateOfPddRegistration ? new Date((dto as any).co2Registry?.dateOfPddRegistration) : (existing as any).co2Registry?.dateOfPddRegistration,
-                co2IssuedSoFar: (dto as any).co2Registry?.co2IssuedSoFar !== undefined ? String((dto as any).co2Registry?.co2IssuedSoFar) : (existing as any).co2Registry?.co2IssuedSoFar,
-                registeredMitigationOutcome: (dto as any).co2Registry?.registeredMitigationOutcome ?? (existing as any).co2Registry?.registeredMitigationOutcome,
-            } as any,
-            tokenization: {
-                ...(existing as any).tokenization,
-                investmentTokenChosen: (dto as any).tokenization?.investmentTokenChosen ?? (existing as any).tokenization?.investmentTokenChosen,
-                interestInListing: (dto as any).tokenization?.interestInListing ?? (existing as any).tokenization?.interestInListing,
-                dcoRegistrationServiceProvided: (dto as any).tokenization?.dcoRegistrationServiceProvided ?? (existing as any).tokenization?.dcoRegistrationServiceProvided,
-                co2ServicesPerformed: (dto as any).tokenization?.co2ServicesPerformed ?? (existing as any).tokenization?.co2ServicesPerformed,
-                keyProjectDocuments: (dto as any).tokenization?.keyProjectDocuments ?? (existing as any).tokenization?.keyProjectDocuments,
-                tokenConversionRule: (dto as any).tokenization?.tokenConversionRule ?? (existing as any).tokenization?.tokenConversionRule,
-                tokenPrice: (dto as any).tokenization?.tokenPrice !== undefined ? String((dto as any).tokenization?.tokenPrice) : (existing as any).tokenization?.tokenPrice,
-                tokenPriceCurrency: (dto as any).tokenization?.tokenPriceCurrency ?? (existing as any).tokenization?.tokenPriceCurrency,
-            } as any,
+            details: this.mapDetails((dto as any).details, (existing as any).details),
+            capital: this.mapCapital((dto as any).capital, (existing as any).capital),
+            co2Registry: this.mapCo2Registry((dto as any).co2Registry, (existing as any).co2Registry),
+            tokenization: this.mapTokenization((dto as any).tokenization, (existing as any).tokenization),
             status: (dto as any).status ?? existing.status,
         });
         return await this.projectRepository.save(merged);
@@ -140,65 +189,56 @@ export class ProjectsService {
 
     async getProjectById(id: string): Promise<Project> {
         const project = await this.projectRepository.findOne({ where: { projectId: id } });
-        if (!project) throw new NotFoundException('Project not found');
+        if (!project) throw new NotFoundException(Errors.PROJECT.PROJECT_NOT_FOUND);
         return project;
     }
 
     async getAllProjects(whereCondition: Record<string, any>, options: QueryTransformOptions) {
         return this.paginationService.applyPaginationAndFilters(
             this.projectRepository,
-            [
-                'projectName',
-                'projectCode',
-                'typeOfProject',
-                'legalSpvName',
-                'co2Registry.registryName',
-                'co2Registry.registryProjectId',
-                'co2Registry.dateOfPddRegistration',
-                'co2Registry.co2IssuedSoFar',
-                'co2Registry.registeredMitigationOutcome',
-                'capital.paidUpEquityCapital',
-                'capital.debtFromBanks',
-                'capital.tenureOfDebtYears',
-                'capital.interestRatePercent',
-                'capital.dscr',
-                'capital.prbPreTaxPercent',
-                'capital.totalSharesSubscribed',
-                'capital.currentBookValuePerShare',
-                'capital.capitalRaisedByPromoters',
-                'details.dateOfCommissioningExpected',
-                'details.tariff',
-                'details.creditRatingOfCharter',
-                'details.internalCreditRating',
-                'details.concessionAgreementTenure',
-                'details.locationCoordinates',
-                'details.nameOfCharter',
-                'details.projectCapacity',
-                'details.externalCreditRating',
-                'tokenization.investmentTokenChosen',
-                'tokenization.interestInListing',
-                'tokenization.dcoRegistrationServiceProvided',
-                'tokenization.co2ServicesPerformed',
-                'tokenization.keyProjectDocuments',
-                'tokenization.tokenConversionRule',
-                'tokenization.tokenPrice',
-                'tokenization.tokenPriceCurrency',
-            ],
+            ProjectsService.SEARCHABLE_FIELDS,
             whereCondition,
-            ['co2Registry', 'capital', 'details', 'tokenization'],
+            ProjectsService.DEFAULT_RELATIONS,
             options,
-            [
-
-            ],
+            [],
         );
     }
 
     async approveOrRejectProject(input: { id: string; status: ProjectStatus; rejectReason?: string | null }) {
         const project = await this.projectRepository.findOne({ where: { projectId: input.id } });
-        if (!project) throw new NotFoundException('Project not found');
+        if (!project) throw new NotFoundException(Errors.PROJECT.PROJECT_NOT_FOUND);
         project.status = input.status;
         (project as any).rejectReason = input.rejectReason ?? null;
         return await this.projectRepository.save(project);
+    }
+
+    async getProjectsByCompanyId(companyId: string) {
+        const projects = await this.projectRepository
+            .createQueryBuilder('project')
+            .leftJoinAndSelect('project.company', 'company')
+            .leftJoinAndSelect('project.details', 'details')
+            .leftJoinAndSelect('project.capital', 'capital')
+            .leftJoinAndSelect('project.co2Registry', 'co2Registry')
+            .leftJoinAndSelect('project.tokenization', 'tokenization')
+            .where('project.companyId = :companyId', { companyId: companyId })
+            .getMany();
+
+        return projects;
+    }
+
+    async getProjectsByProjectType(projectType: ProjectType) {
+        const projects = await this.projectRepository
+            .createQueryBuilder('project')
+            .leftJoinAndSelect('project.company', 'company')
+            .leftJoinAndSelect('project.details', 'details')
+            .leftJoinAndSelect('project.capital', 'capital')
+            .leftJoinAndSelect('project.co2Registry', 'co2Registry')
+            .leftJoinAndSelect('project.tokenization', 'tokenization')
+            .leftJoinAndSelect('project.createdBy', 'createdBy')
+            .where('project.typeOfProject = :type', { type: projectType })
+            .getMany();
+
+        return projects;
     }
 }
 

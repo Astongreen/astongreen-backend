@@ -1,17 +1,18 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { CompaniesService } from 'src/companies/companies.service';
 import { CreateCompanyDto } from 'src/companies/dto/create-company.dto';
 import { UpdateCompanyDto } from 'src/companies/dto/update-company.dto';
 import { ResponseMessage } from '../common/decorators/response-message.decorator';
 import { Messages } from '../common/constants/messages';
-import { ApiAdminApproveOrRejectCompany, ApiAdminApproveOrRejectProject, ApiAdminController, ApiAdminCreateCompany, ApiAdminCreateProject, ApiAdminGetAllApprovedCompanies, ApiAdminGetCompanies, ApiAdminGetCompanyById, ApiAdminGetProjectById, ApiAdminGetProjects, ApiAdminUpdateCompany, ApiAdminUpdateProject } from './admin.swagger';
+import { ApiAdminApproveOrRejectCompany, ApiAdminApproveOrRejectProject, ApiAdminController, ApiAdminCreateCompany, ApiAdminCreateProject, ApiAdminGetAllApprovedCompanies, ApiAdminGetCompanies, ApiAdminGetCompanyById, ApiAdminGetProjectById, ApiAdminGetProjects, ApiAdminGetProjectsByCompanyId, ApiAdminGetProjectsByProjectType, ApiAdminUpdateCompany, ApiAdminUpdateProject } from './admin.swagger';
 import { CONTROLLERS, INERNAL_ROUTES } from 'src/common/constants/utils';
 import { ApproveOrRejectCompanyDto, GetAllCompaniesDto } from './dto/companies.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { UserRole } from 'src/common/enums/role.enum';
+import { ProjectType, UserRole } from 'src/common/enums/role.enum';
 import { CompanyStatus } from 'src/companies/types/company.enum';
 import { ProjectsService } from 'src/projects/projects.service';
 import { CreateProjectDto } from 'src/projects/dto/create-project.dto';
@@ -19,9 +20,10 @@ import { UpdateProjectDto } from 'src/projects/dto/update-project.dto';
 import { ProjectStatus } from 'src/projects/types/project.enum';
 
 @ApiAdminController()
+@ApiBearerAuth('access-token')
 @Controller(CONTROLLERS.ADMIN)
-@UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+// @UseGuards(JwtAuthGuard, RolesGuard)
+// @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
@@ -65,9 +67,29 @@ export class AdminController {
   @HttpCode(HttpStatus.OK)
   @ResponseMessage(Messages.ADMIN.PROJECT_GET_ALL)
   @Get(INERNAL_ROUTES.ADMIN.PROJECT_GET_ALL)
-  async getAllProjects(@Req() req: Request) {
+  @ApiQuery({ name: 'companyId', required: false, type: String, description: 'Filter projects by company ID' })
+  async getAllProjects(@Req() req: Request, @Query() companyId: string) {
     let whereCondition: Record<string, any> = {};
+    if (companyId) {
+      whereCondition.companyId = companyId;
+    }
     return await this.projectsService.getAllProjects(whereCondition, (req as any)['modifiedQuery'],);
+  }
+
+  @ApiAdminGetProjectsByCompanyId()
+  @HttpCode(HttpStatus.OK)
+  @ResponseMessage(Messages.ADMIN.PROJECT_GET_BY_COMPANY_ID)
+  @Get(INERNAL_ROUTES.ADMIN.PROJECT_GET_BY_COMPANY_ID)
+  async getProjectsByCompanyId(@Param('companyId') companyId: string) {
+    return await this.projectsService.getProjectsByCompanyId(companyId);
+  }
+
+  @ApiAdminGetProjectsByProjectType()
+  @HttpCode(HttpStatus.OK)
+  @ResponseMessage(Messages.ADMIN.PROJECT_GET_BY_PROJECT_TYPE)
+  @Get(INERNAL_ROUTES.ADMIN.PROJECT_GET_BY_PROJECT_TYPE)
+  async getProjectsByProjectType(@Param('projectType') projectType: ProjectType) {
+    return await this.projectsService.getProjectsByProjectType(projectType);
   }
 
   @Roles(UserRole.SUPER_ADMIN)
@@ -125,6 +147,9 @@ export class AdminController {
     if (query.country) {
       whereCondition.country = query.country;
     }
+    if (query.status) {
+      whereCondition.status = query.status;
+    }
     return await this.companiesService.getAllCompanies(whereCondition, (req as any)['modifiedQuery'],);
   }
 
@@ -140,6 +165,8 @@ export class AdminController {
         : Messages.ADMIN.COMPANY_REJECTED;
     return { message: dynamicMessage, ...result };
   }
+
+
 }
 
 

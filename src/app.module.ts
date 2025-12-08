@@ -10,6 +10,7 @@ import { AdminModule } from './admin/admin.module';
 import { CompaniesModule } from './companies/companies.module';
 import { ProjectsModule } from './projects/projects.module';
 import { QueryTransformMiddleware } from './common/middlewares/query-transform/query-transform.middleware';
+import { TokenModule } from './token/token.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { QueryTransformMiddleware } from './common/middlewares/query-transform/q
     AdminModule,
     CompaniesModule,
     ProjectsModule,
+    TokenModule,
   ],
   controllers: [AppController],
   providers: [AppService],

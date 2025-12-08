@@ -5,3 +5,10 @@ export enum UserRole {
 }
 
 
+export enum ProjectType {
+    WIND = 'WIND',
+    SOLAR_PV = 'SOLAR_PV',
+    HYDROELECTRIC = 'HYDROELECTRIC',
+    BATTERY = 'BATTERY',
+    EV = 'EV',
+}

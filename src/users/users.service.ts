@@ -1,10 +1,11 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './entities/user.entity';
 import { UserRole } from '../common/enums/role.enum';
 import { Errors } from 'src/common/constants/messages';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
 export class UsersService {
@@ -46,6 +47,37 @@ export class UsersService {
   async updatePassword(userId: string, newPassword: string): Promise<void> {
     const passwordHash = await bcrypt.hash(newPassword, 10);
     await this.userRepository.update({ id: userId }, { passwordHash });
+  }
+
+  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException(Errors.USER.USER_NOT_FOUND);
+    }
+    const isValid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isValid) {
+      throw new BadRequestException(Errors.AUTH.INVALID_CURRENT_PASSWORD);
+    }
+    await this.updatePassword(userId, newPassword);
+  }
+
+  async updateProfile(userId: string, dto: UpdateProfileDto): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException(Errors.USER.USER_NOT_FOUND);
+    }
+    await this.userRepository.update(
+      { id: userId },
+      {
+        firstName: dto.firstName ?? user.firstName ?? null,
+        lastName: dto.lastName ?? user.lastName ?? null,
+      },
+    );
+    const updated = await this.userRepository.findOne({ select: ['id', 'email', 'role', 'firstName', 'lastName', 'profilePicture', 'lastLoginAt'], where: { id: userId } });
+    if (!updated) {
+      throw new NotFoundException(Errors.USER.USER_NOT_FOUND);
+    }
+    return updated;
   }
 
   async updateLastLoginAt(userId: string): Promise<User> {
