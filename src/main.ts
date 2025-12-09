@@ -47,6 +47,6 @@ async function bootstrap() {
       persistAuthorization: true,
     },
   });
-  await app.listen(process.env.PORT ?? 8081);
+  await app.listen(process.env.PORT ?? 8092);
 }
 bootstrap();

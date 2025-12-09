@@ -26,7 +26,7 @@ WORKDIR /app
 
 # Set environment variables (can be overridden by docker-compose.yml)
 ENV NODE_ENV=production
-ENV PORT=8081
+ENV PORT=8092
 
 # Copy dependencies and built application
 COPY --from=deps /app/node_modules ./node_modules
@@ -37,7 +37,7 @@ COPY --from=build /app/dist ./dist
 RUN mkdir -p /app/uploads
 
 # Expose the port (matches docker-compose.yml PORT=3000)
-EXPOSE 8081
+EXPOSE 8092
 
 # Start the application
 CMD ["node", "dist/main.js"]
