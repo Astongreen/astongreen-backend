@@ -43,9 +43,14 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api-docs', app, document, {
     useGlobalPrefix: false,
+    customSiteTitle: 'Aston Green API Documentation',
     swaggerOptions: {
       persistAuthorization: true,
+      docExpansion: 'none',
+      filter: true,
+      showRequestDuration: true,
     },
+    customCss: '.swagger-ui .topbar { display: none }',
   });
   await app.listen(process.env.PORT ?? 8092);
 }

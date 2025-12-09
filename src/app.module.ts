@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { EmailModule } from './common/email/email.module';
+import { RedisModule } from './common/redis/redis.module';
 import { AdminModule } from './admin/admin.module';
 import { CompaniesModule } from './companies/companies.module';
 import { ProjectsModule } from './projects/projects.module';
@@ -29,10 +30,18 @@ import { TokenModule } from './token/token.module';
         database: config.get('DB_NAME', 'aston_green'),
         autoLoadEntities: true,
         synchronize: config.get('DB_SYNC', 'false') === 'true',
+        retryAttempts: 5,
+        retryDelay: 3000,
+        connectTimeout: 10000,
+        extra: {
+          connectionLimit: 10,
+        },
+        logging: config.get('NODE_ENV') === 'dev' ? ['error', 'warn'] : ['error'],
       }),
     }),
     UsersModule,
     EmailModule,
+    RedisModule,
     AuthModule,
     AdminModule,
     CompaniesModule,
