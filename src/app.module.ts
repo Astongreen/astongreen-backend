@@ -16,7 +16,7 @@ import { TokenModule } from './token/token.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: `.env.${process.env.NODE_ENV || 'dev'}`,
+      envFilePath: [`.env.${process.env.NODE_ENV || 'dev'}`, '.env'],
     }),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
