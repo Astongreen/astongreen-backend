@@ -346,7 +346,6 @@ export class PaginationService {
       //   }
       // } else 
 
-
       if (InstanceChecker.isFindOperator(value)) {
         const { type, value: resolvedValue } = resolveFindOperator(value);
 
