@@ -6,7 +6,7 @@ export const Messages = {
   AUTH: {
     SIGNUP_SUCCESS: 'Signup successful',
     LOGIN_SUCCESS: 'Login successful',
-    FORGOT_PASSWORD_SENT: 'If the email exists, an OTP has been sent',
+    FORGOT_PASSWORD_SENT: 'Verification code sent to your email, please check your email',
     RESET_PASSWORD_SUCCESS: 'Password reset successful',
   },
   USERS: {
@@ -20,6 +20,14 @@ export const Messages = {
     TOKENS_GET_ALL: 'Tokens fetched successfully',
   },
   ADMIN: {
+    ROLE_PERMISSIONS_GET_ALL_SUCCESSFULLY: 'Role permissions fetched successfully',
+    ROLE_PERMISSIONS_UPDATED_SUCCESSFULLY: 'Role permissions updated successfully',
+    ROLE_PERMISSIONS_GET_SUCCESSFULLY: 'Role permissions fetched successfully',
+    USER_ADDED: 'User added successfully',
+    USER_UPDATED: 'User updated successfully',
+    USER_BLOCKED: 'User blocked successfully',
+    USER_UNBLOCKED: 'User unblocked successfully',
+    USER_GET_ALL: 'Users fetched successfully',
     COMPANY_CREATED: 'Company created successfully',
     COMPANY_UPDATED: 'Company updated successfully',
     COMPANY_GET_ALL: 'Companies fetched successfully',
@@ -44,10 +52,16 @@ export const Errors = {
   USER: {
     EMAIL_ALREADY_IN_USE: 'Email already in use',
     USER_NOT_FOUND: 'User not found',
+    USER_NOT_ALLOWED_TO_BLOCK_SUPER_ADMIN: 'You are not allowed to block a super admin',
+    USER_IS_BLOCKED: 'User is blocked, please contact support',
   },
   AUTH: {
     INVALID_CREDENTIALS: 'Invalid credentials',
     INVALID_CURRENT_PASSWORD: 'Current password is incorrect',
+    USER_NOT_FOUND: 'User not found',
+    INVALID_OTP_CODE: 'Invalid OTP code',
+    OTP_CODE_ALREADY_USED: 'OTP code already used',
+    OTP_CODE_EXPIRED: 'OTP code expired',
   },
   COMPANY: {
     COMPANY_NOT_FOUND: 'Company not found',

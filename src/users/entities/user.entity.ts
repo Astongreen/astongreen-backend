@@ -29,6 +29,21 @@ export class User {
     @Column({ name: 'last_login_at', type: 'timestamp', nullable: true })
     lastLoginAt?: Date | null;
 
+    @Column({ type: 'boolean', default: false })
+    isBlocked: boolean;
+
+    @Column({ type: 'varchar', length: 255, nullable: true })
+    companyName?: string | null;
+
+    @Column({ type: 'varchar', length: 255, nullable: true })
+    address?: string | null;
+
+    @Column({ type: 'varchar', length: 255, nullable: true })
+    pinCode?: string | null;
+
+    @Column({ type: 'varchar', length: 255, nullable: true })
+    phoneNumber?: string | null;
+
     @CreateDateColumn({ name: 'created_at' })
     createdAt: Date;
 

@@ -17,7 +17,7 @@ import { ApiCreateToken, ApiDeleteToken, ApiGetAllTokens, ApiUpdateToken } from 
 @Controller(CONTROLLERS.TOKEN)
 // @ApiBearerAuth('access-token')
 // @UseGuards(JwtAuthGuard)
-// @Roles(UserRole.ADMIN, UserRole.SUPER_ADMIN)
+// @Roles(UserRole.SUPER_ADMIN)
 export class TokenController {
   constructor(private readonly tokenService: TokenService) { }
 

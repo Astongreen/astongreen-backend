@@ -1,15 +1,13 @@
 import { Injectable, UnauthorizedException, BadRequestException, NotFoundException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
 import { UsersService } from '../users/users.service';
 import { EmailService } from '../common/email/email.service';
-import { PasswordResetOtp } from './entities/password-reset-otp.entity';
 import { SignupDto } from './dto/signup.dto';
 import { LoginDto } from './dto/login.dto';
 import { Errors } from 'src/common/constants/messages';
 import { User } from 'src/users/entities/user.entity';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class AuthService {
@@ -17,8 +15,7 @@ export class AuthService {
     private readonly usersService: UsersService,
     private readonly jwtService: JwtService,
     private readonly emailService: EmailService,
-    @InjectRepository(PasswordResetOtp)
-    private readonly otpRepository: Repository<PasswordResetOtp>,
+    private readonly redis: RedisService,
   ) { }
 
   async signup(signupDto: SignupDto) {
@@ -40,9 +37,13 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException(Errors.AUTH.INVALID_CREDENTIALS);
     }
+
     const isValid = await bcrypt.compare(password, user.passwordHash);
     if (!isValid) {
       throw new UnauthorizedException(Errors.AUTH.INVALID_CREDENTIALS);
+    }
+    if (user.isBlocked) {
+      throw new UnauthorizedException(Errors.USER.USER_IS_BLOCKED);
     }
     const payload = { userId: user.id, email: user.email, role: user.role };
     const accessToken = await this.jwtService.signAsync(payload);
@@ -68,17 +69,13 @@ export class AuthService {
   async forgotPassword(email: string): Promise<void> {
     const user = await this.usersService.findByEmail(email);
     if (!user) {
-      // Do not reveal user existence
-      return;
+      throw new NotFoundException(Errors.AUTH.USER_NOT_FOUND);
     }
     const code = this.generateOtp();
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
-    const otp = this.otpRepository.create({
-      user,
-      code,
-      expiresAt,
-    });
-    await this.otpRepository.save(otp);
+    const ttlSeconds = 10 * 60;
+    const key = `pwd_reset:${user.id}`;
+    // Store OTP with TTL; overwrite any previous pending code for this user
+    await this.redis.set<string>(key, code, ttlSeconds);
     await this.emailService.sendPasswordResetOtpEmail(email, code);
   }
 
@@ -87,22 +84,17 @@ export class AuthService {
     if (!user) {
       throw new NotFoundException('Invalid code or email');
     }
-    const otp = await this.otpRepository.findOne({
-      where: { user: { id: user.id }, code },
-      order: { createdAt: 'desc' },
-    });
-    if (!otp) {
-      throw new BadRequestException('Invalid code');
+    const key = `pwd_reset:${user.id}`;
+    const storedCode = await this.redis.get<string>(key);
+    if (!storedCode) {
+      throw new BadRequestException(Errors.AUTH.INVALID_OTP_CODE);
     }
-    if (otp.usedAt) {
-      throw new BadRequestException('Code already used');
-    }
-    if (otp.expiresAt.getTime() < Date.now()) {
-      throw new BadRequestException('Code expired');
+    if (storedCode !== code) {
+      throw new BadRequestException(Errors.AUTH.INVALID_OTP_CODE);
     }
     await this.usersService.updatePassword(user.id, newPassword);
-    otp.usedAt = new Date();
-    await this.otpRepository.save(otp);
+    // Invalidate the OTP to prevent reuse
+    await this.redis.del(key);
   }
 }
 

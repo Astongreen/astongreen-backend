@@ -2,11 +2,19 @@ import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGenerat
 import { TokenStatus, TokenType } from '../enums/token.enum';
 import { Project } from 'src/projects/entities/project.entity';
 import { Company } from 'src/companies/entities/company.entity';
+import { ProjectType } from 'src/common/enums/role.enum';
 
 export type TokenDistributionItem = {
+
     projectId: Project['projectId'];
     totalTokenDistribution: string;
     value: string;
+    projectName?: string;
+};
+
+export type TokenDistribution = {
+    projectType: ProjectType;
+    distrubutionItems: TokenDistributionItem[];
 };
 
 @Entity({ name: 'tokens' })
@@ -18,7 +26,7 @@ export class Token {
     tokenType: TokenType;
 
     @Column({ type: 'json', name: 'token_distribution', nullable: true })
-    tokenDistribution?: TokenDistributionItem[];
+    tokenDistribution?: TokenDistribution[];
 
     @Column({ type: 'text', nullable: true })
     description: string;

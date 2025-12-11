@@ -212,7 +212,7 @@ export class ProjectsService {
         return await this.projectRepository.save(project);
     }
 
-    async getProjectsByCompanyId(companyId: string) {
+    async getProjectsByCompanyId(companyId: string, projectType?: ProjectType) {
         const projects = await this.projectRepository
             .createQueryBuilder('project')
             .leftJoinAndSelect('project.company', 'company')
@@ -220,10 +220,16 @@ export class ProjectsService {
             .leftJoinAndSelect('project.capital', 'capital')
             .leftJoinAndSelect('project.co2Registry', 'co2Registry')
             .leftJoinAndSelect('project.tokenization', 'tokenization')
-            .where('project.companyId = :companyId', { companyId: companyId })
+            .where('project.companyId = :companyId', { companyId: companyId });
+
+        if (projectType !== undefined && projectType !== null) {
+            projects.andWhere('project.typeOfProject = :type', { type: projectType });
+        }
+
+        const result = await projects
             .getMany();
 
-        return projects;
+        return result;
     }
 
     async getProjectsByProjectType(projectType: ProjectType) {

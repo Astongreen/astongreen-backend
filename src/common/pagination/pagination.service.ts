@@ -355,7 +355,6 @@ export class PaginationService {
             [paramKey]: resolvedValue,
           });
         } else if (type === 'not') {
-          console.log('resolvedValue', resolvedValue);
 
           if (Array.isArray(resolvedValue)) {
             // Include NULLs when using NOT IN so that NULL rows aren't excluded unintentionally

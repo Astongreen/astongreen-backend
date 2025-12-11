@@ -39,7 +39,6 @@ export class Company {
     @Column({ type: 'varchar', length: 500, nullable: true })
     rejectReason?: string | null;
 
-
     @ManyToOne(() => User, (user) => user.companies, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'createdBy' })
     user: User;

@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Token } from './entities/token.entity';
+import { In, Repository } from 'typeorm';
+import { Token, TokenDistribution } from './entities/token.entity';
 import { CreateTokenDto } from './dto/create-token.dto';
 import { UpdateTokenDto } from './dto/update-token.dto';
 import { Errors } from 'src/common/constants/messages';
@@ -23,9 +23,9 @@ export class TokenService {
     return { ok: true };
   }
 
-  private async validateTokenDistributionProjects(tokenDistribution?: { projectId: string }[]) {
+  private async validateTokenDistributionProjects(tokenDistribution?: TokenDistribution[]) {
     if (!tokenDistribution || tokenDistribution.length === 0) return;
-    const ids = tokenDistribution.map(i => i.projectId);
+    const ids = tokenDistribution.flatMap(i => i.distrubutionItems.map(item => item.projectId));
     // Validate each id exists
     const found = await Promise.all(ids.map(id => this.projectRepository.findOne({ where: { projectId: id } })));
     const missingIndex = found.findIndex(p => !p);
@@ -68,7 +68,7 @@ export class TokenService {
   }
 
   async getAllTokens(whereCondition: Record<string, any>, options: QueryTransformOptions) {
-    return this.paginationService.applyPaginationAndFilters(
+    const result = await this.paginationService.applyPaginationAndFilters(
       this.tokenRepository,
       [],
       whereCondition,
@@ -76,6 +76,32 @@ export class TokenService {
       options,
       [],
     );
+    // Enrich tokenDistribution items with projectName
+    const allProjectIds = new Set<string>();
+    (result.docs || []).forEach(token => {
+      (token.tokenDistribution || []).forEach(item => {
+        if (item?.distrubutionItems) item.distrubutionItems.forEach(item => allProjectIds.add(item.projectId));
+      });
+    });
+    if (allProjectIds.size === 0) {
+      return result;
+    }
+    const projects = await this.projectRepository.find({
+      where: { projectId: In(Array.from(allProjectIds)) },
+      select: ['projectId', 'projectName'],
+    });
+    const idToName = new Map(projects.map(p => [p.projectId, (p as any).projectName]));
+    const enrichedDocs = (result.docs || []).map(token => ({
+      ...token,
+      tokenDistribution: (token.tokenDistribution || []).map(item => ({
+        ...item,
+        distrubutionItems: item.distrubutionItems.map(item => ({
+          ...item,
+          projectName: idToName.get(item.projectId) ?? null,
+        })),
+      })),
+    })) as any;
+    return { ...result, docs: enrichedDocs };
   }
 }
 

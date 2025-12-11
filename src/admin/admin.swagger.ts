@@ -2,6 +2,9 @@ import { applyDecorators } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateProjectDto } from '../projects/dto/create-project.dto';
 import { UpdateProjectDto } from '../projects/dto/update-project.dto';
+import { AddNewUserDto } from './dto/user.dto';
+import { UpdateRolePermissionsDto } from './dto/permissions.dto';
+import { Permission } from 'src/common/enums/permission.enum';
 
 export const ApiAdminController = () =>
   applyDecorators(ApiTags('admin'), ApiBearerAuth('access-token'));
@@ -195,6 +198,7 @@ export const ApiAdminApproveOrRejectProject = () =>
 export const ApiAdminGetProjectsByCompanyId = () =>
   applyDecorators(
     ApiOperation({ summary: 'Admin: List projects by company ID' }),
+    ApiQuery({ name: 'projectType', required: false, type: String, description: 'Filter projects by project type' }),
     ApiResponse({ status: 200, description: 'Projects fetched by company ID' }),
   );
 
@@ -202,6 +206,43 @@ export const ApiAdminGetProjectsByProjectType = () =>
   applyDecorators(
     ApiOperation({ summary: 'Admin: List projects by project type' }),
     ApiResponse({ status: 200, description: 'Projects fetched by project type' }),
+  );
+
+export const ApiAdminAddNewUser = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Admin: Add a new user' }),
+    ApiBody({ type: AddNewUserDto }),
+    ApiResponse({ status: 201, description: 'User added' }),
+  );
+
+// Role permissions management
+export const ApiAdminListRolePermissions = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Admin: List role permissions (all roles)' }),
+    ApiResponse({ status: 200, description: 'Role permissions fetched' }),
+  );
+
+export const ApiAdminGetRolePermissions = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Admin: Get permissions for a role' }),
+    ApiResponse({ status: 200, description: 'Role permissions fetched' }),
+  );
+
+export const ApiAdminUpdateRolePermissions = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Admin: Update permissions for a role' }),
+    ApiBody({ type: UpdateRolePermissionsDto }),
+    ApiResponse({ status: 200, description: 'Role permissions updated' }),
+  );
+
+export const ApiAdminGetAllUsers = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Admin: List users' }),
+    ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number (default: 1)' }),
+    ApiQuery({ name: 'limit', required: false, type: Number, description: 'Items per page (default: 10)' }),
+    ApiQuery({ name: 'role', required: false, type: String, description: 'Filter by role' }),
+    ApiQuery({ name: 'search', required: false, type: String, description: 'Search by name/email' }),
+    ApiResponse({ status: 200, description: 'Users fetched' }),
   );
 
 

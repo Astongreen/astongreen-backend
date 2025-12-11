@@ -9,6 +9,8 @@ export const CONTROLLERS = {
 export const INERNAL_ROUTES = {
     ADMIN: {
         HEALTH: 'health',
+        USER_ADD: 'users',
+        USER_GET_ALL: 'users',
         COMPANY_CREATE: 'companies',
         COMPANY_UPDATE: 'companies/:id',
         COMPANY_GET_ALL: 'companies',

@@ -1,5 +1,7 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { CreateTokenDto } from './dto/create-token.dto';
+import { UpdateTokenDto } from './dto/update-token.dto';
 
 export const ApiTokenController = () =>
   applyDecorators(ApiTags('token'), ApiBearerAuth('access-token'));
@@ -7,12 +9,14 @@ export const ApiTokenController = () =>
 export const ApiCreateToken = () =>
   applyDecorators(
     ApiOperation({ summary: 'Token: Create token' }),
+    ApiBody({ type: CreateTokenDto }),
     ApiResponse({ status: 201, description: 'Token created' }),
   );
 
 export const ApiUpdateToken = () =>
   applyDecorators(
     ApiOperation({ summary: 'Token: Update token' }),
+    ApiBody({ type: UpdateTokenDto }),
     ApiResponse({ status: 200, description: 'Token updated' }),
   );
 
