@@ -28,6 +28,7 @@ export const Messages = {
     USER_BLOCKED: 'User blocked successfully',
     USER_UNBLOCKED: 'User unblocked successfully',
     USER_GET_ALL: 'Users fetched successfully',
+    USER_GET_BY_ID: 'User fetched successfully',
     COMPANY_CREATED: 'Company created successfully',
     COMPANY_UPDATED: 'Company updated successfully',
     COMPANY_GET_ALL: 'Companies fetched successfully',

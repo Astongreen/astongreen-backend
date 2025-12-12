@@ -1,5 +1,5 @@
 import { applyDecorators } from '@nestjs/common';
-import { ApiBearerAuth, ApiBody, ApiOperation, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { CreateProjectDto } from '../projects/dto/create-project.dto';
 import { UpdateProjectDto } from '../projects/dto/update-project.dto';
 import { AddNewUserDto } from './dto/user.dto';
@@ -243,6 +243,13 @@ export const ApiAdminGetAllUsers = () =>
     ApiQuery({ name: 'role', required: false, type: String, description: 'Filter by role' }),
     ApiQuery({ name: 'search', required: false, type: String, description: 'Search by name/email' }),
     ApiResponse({ status: 200, description: 'Users fetched' }),
+  );
+
+export const ApiAdminGetUserById = () =>
+  applyDecorators(
+    ApiOperation({ summary: 'Admin: Get user by ID' }),
+    ApiParam({ name: 'id', type: String, description: 'User ID' }),
+    ApiResponse({ status: 200, description: 'User fetched' }),
   );
 
 

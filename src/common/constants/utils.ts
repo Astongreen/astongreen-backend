@@ -11,6 +11,7 @@ export const INERNAL_ROUTES = {
         HEALTH: 'health',
         USER_ADD: 'users',
         USER_GET_ALL: 'users',
+        USER_GET_BY_ID: 'users/:id',
         COMPANY_CREATE: 'companies',
         COMPANY_UPDATE: 'companies/:id',
         COMPANY_GET_ALL: 'companies',

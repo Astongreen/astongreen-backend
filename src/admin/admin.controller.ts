@@ -6,7 +6,7 @@ import { CreateCompanyDto } from 'src/companies/dto/create-company.dto';
 import { UpdateCompanyDto } from 'src/companies/dto/update-company.dto';
 import { ResponseMessage } from '../common/decorators/response-message.decorator';
 import { Messages } from '../common/constants/messages';
-import { ApiAdminAddNewUser, ApiAdminApproveOrRejectCompany, ApiAdminApproveOrRejectProject, ApiAdminController, ApiAdminCreateCompany, ApiAdminCreateProject, ApiAdminGetAllApprovedCompanies, ApiAdminGetCompanies, ApiAdminGetCompanyById, ApiAdminGetProjectById, ApiAdminGetProjects, ApiAdminGetProjectsByCompanyId, ApiAdminGetProjectsByProjectType, ApiAdminListRolePermissions, ApiAdminGetRolePermissions, ApiAdminUpdateRolePermissions, ApiAdminGetAllUsers, ApiAdminUpdateCompany, ApiAdminUpdateProject } from './admin.swagger';
+import { ApiAdminAddNewUser, ApiAdminApproveOrRejectCompany, ApiAdminApproveOrRejectProject, ApiAdminController, ApiAdminCreateCompany, ApiAdminCreateProject, ApiAdminGetAllApprovedCompanies, ApiAdminGetCompanies, ApiAdminGetCompanyById, ApiAdminGetProjectById, ApiAdminGetProjects, ApiAdminGetProjectsByCompanyId, ApiAdminGetProjectsByProjectType, ApiAdminListRolePermissions, ApiAdminGetRolePermissions, ApiAdminUpdateRolePermissions, ApiAdminGetAllUsers, ApiAdminGetUserById, ApiAdminUpdateCompany, ApiAdminUpdateProject } from './admin.swagger';
 import { CONTROLLERS, INERNAL_ROUTES } from 'src/common/constants/utils';
 import { ApproveOrRejectCompanyDto, GetAllCompaniesDto } from './dto/companies.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
@@ -241,6 +241,14 @@ export class AdminController {
       whereCondition.role = query.role;
     }
     return await this.adminService.getAllUsers(whereCondition, (req as any)['modifiedQuery'],);
+  }
+
+  @ApiAdminGetUserById()
+  @HttpCode(HttpStatus.OK)
+  @ResponseMessage(Messages.ADMIN.USER_GET_BY_ID)
+  @Get(INERNAL_ROUTES.ADMIN.USER_GET_BY_ID)
+  async getUserById(@Param('id') id: string) {
+    return await this.adminService.getUserById(id);
   }
 
 

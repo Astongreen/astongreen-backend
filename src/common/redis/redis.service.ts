@@ -5,7 +5,7 @@ import Redis from 'ioredis';
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(RedisService.name);
-  private client: Redis;
+  private client: InstanceType<typeof Redis>;
 
   constructor(private readonly configService: ConfigService) {
     const host = this.configService.get<string>('REDIS_HOST', 'localhost');
@@ -16,7 +16,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
       host,
       port,
       password: password || undefined,
-      retryStrategy: (times) => {
+      retryStrategy: (times: number) => {
         if (times > 10) {
           this.logger.warn('Redis connection retry limit reached. Will continue retrying...');
           return null; // Continue retrying indefinitely
@@ -30,7 +30,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     });
 
     // Error handling
-    this.client.on('error', (error) => {
+    this.client.on('error', (error: any) => {
       this.logger.error(`Redis connection error: ${error.message}`, error.stack);
     });
 
@@ -84,18 +84,18 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
           return true;
         }
       }
-      
+
       // Try to connect if not already connected
       if (this.client.status === 'wait' || this.client.status === 'end') {
         await this.client.connect();
         const result = await this.client.ping();
-        
+
         if (result === 'PONG') {
           this.logger.log(`Redis PING successful - Connected to ${this.client.options.host}:${this.client.options.port}`);
           return true;
         }
       }
-      
+
       throw new Error('Redis PING did not return PONG');
     } catch (error) {
       this.logger.error(`Redis connection verification failed: ${error.message}`);
@@ -106,7 +106,7 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
   /**
    * Get the Redis client instance
    */
-  getClient(): Redis {
+  getClient(): InstanceType<typeof Redis> {
     return this.client;
   }
 

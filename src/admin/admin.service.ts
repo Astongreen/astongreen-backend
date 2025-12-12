@@ -103,6 +103,14 @@ export class AdminService {
         return await this.userRepository.save(user);
     }
 
+    async getUserById(id: string): Promise<User> {
+        const user = await this.userRepository.findOne({ where: { id } });
+        if (!user) {
+            throw new ConflictException(Errors.USER.USER_NOT_FOUND);
+        }
+        return user;
+    }
+
 
     async getAllUsers(
         whereCondition: Record<string, any>,
